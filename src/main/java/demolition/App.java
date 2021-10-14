@@ -9,8 +9,8 @@ import java.util.HashMap;
 import java.util.Random;
 
 public class App extends PApplet {
-    public static final int WIDTH = 480;
-    public static final int HEIGHT = 480;
+    public static final int WIDTH = 720;
+    public static final int HEIGHT = WIDTH;
 
     public static final int FPS = 60;
 
@@ -55,7 +55,9 @@ public class App extends PApplet {
 //公共基建或者配置
 class Public {
     public static ImgCenter imgCenter = null;
-    public static int GridWith = 32;  //480/15=32
+    public static final int x_count = 15;  //水平格子数
+    public static final int y_count = 13;  //锤直格子数
+    public static int GridWith = App.WIDTH/x_count;  //480/15=32
     public static int HumanOverstep = Public.GridWith / 2;
     // GridType 常量定义
     static final int GridType_Empty = 0; //
@@ -84,17 +86,13 @@ class Public {
         }
         return false;
     }
-    public static Random random=new Random(){
-        {
-            setSeed(System.currentTimeMillis());
-        }
-    };
+    public static Random random=new Random();
 }
 
 class Playgroud {
     int[][] AllGrads = null;
-    final int x_count = 15;  //水平格子数
-    final int y_count = 13;  //锤直格子数
+    final int x_count = Public.x_count;  //水平格子数
+    final int y_count = Public.y_count;  //锤直格子数
     final int topSpaceHeightPx = Public.GridWith * 2;
     private Location playLocation = null;
     private ArrayList<Location> redEnemyLocations = new ArrayList<Location>();
@@ -177,7 +175,7 @@ class Playgroud {
         }
         int newLocationGradType = AllGrads[newLocation.y][newLocation.x];
         boolean newLocationCanArrive = newLocationGradType == Public.GridType_Empty || newLocationGradType == Public.GridType_Destination;
-        if (!newLocation.equals(oldLocation) && newLocationCanArrive) { //位置有变化且新位置是空白
+        if (!newLocation.equals(oldLocation) && newLocationCanArrive) { //位置有变化且新位置可抵达
             return newLocation;
         }
         return oldLocation;
@@ -237,7 +235,7 @@ class ImgCenter {
         gridTypeToImg.put(Public.GridType_Stone, imgLoader.loadImage(parentPath + "wall/solid.png"));
         gridTypeToImg.put(Public.GridType_Brick, imgLoader.loadImage(parentPath + "broken/broken.png"));
         gridTypeToImg.put(Public.GridType_Destination, imgLoader.loadImage(parentPath + "goal/goal.png"));
-        gridTypeToImg.put(Public.GridType_Player, imgLoader.loadImage(parentPath + "player/player1.png"));
+        gridTypeToImg.put(Public.GridType_Player, imgLoader.loadImage(parentPath + "player/player.gif"));
         gridTypeToImg.put(Public.GridType_RedEnemy, imgLoader.loadImage(parentPath + "red_enemy/red_down1.png"));
         gridTypeToImg.put(Public.GridType_Bomb, imgLoader.loadImage(parentPath + "bomb/bomb.png"));
     }

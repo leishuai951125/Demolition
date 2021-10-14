@@ -177,7 +177,7 @@ class Playgroud {
         }
         int newLocationGradType = AllGrads[newLocation.y][newLocation.x];
         boolean newLocationCanArrive = newLocationGradType == Public.GridType_Empty || newLocationGradType == Public.GridType_Destination;
-        if (!newLocation.equals(oldLocation) && newLocationCanArrive) { //位置有变化且新位置是空白
+        if (!newLocation.equals(oldLocation) && newLocationCanArrive) { //位置有变化且新位置可抵达
             return newLocation;
         }
         return oldLocation;

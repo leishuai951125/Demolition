@@ -45,7 +45,6 @@ class Playgroud {
     List<Location> getBombExplodedCover(Location bombLocation){
         int y=bombLocation.y;
         int x=bombLocation.x;
-        AllGrads[y][x] = Public.GridType_Bomb;
         //计算爆炸范围
         List<Location>  bombExplodedCover=new ArrayList<>(5); //爆炸范围
         bombExplodedCover.add(new Location(x,y));

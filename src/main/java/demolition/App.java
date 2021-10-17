@@ -1,21 +1,13 @@
 package demolition;
 
 import processing.core.PApplet;
-import processing.core.PImage;
 import processing.event.KeyEvent;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class App extends PApplet {
     public static final int WIDTH = 720;
     public static final int HEIGHT = WIDTH;
 
-    public static final int FPS = 60;
+    public  final int FPS = 60;
 
     public Playgroud playgroud = null;
 

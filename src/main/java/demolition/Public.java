@@ -3,6 +3,8 @@ package demolition;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 //公共基建或者配置
 class Public {
@@ -10,6 +12,7 @@ class Public {
     public static final int x_count = 15;  //水平格子数
     public static final int y_count = 13;  //锤直格子数
     public static int GridWith = App.WIDTH/x_count;  //480/15=32
+    final static int TopSpaceHeightPx = Public.GridWith * 2;
     public static int HumanOverstep = Public.GridWith / 2;
     // GridType 常量定义
     static final int GridType_Empty = 0; //
@@ -43,4 +46,18 @@ class Public {
     public static Random random=new Random();
     //定时任务执行器
     static ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+//    //按一定次数间隔执行
+//    public static void RepartRunWithLimt(Runnable command,long periodMs,int runTimesLimit,Runnable finishedTask){
+//        //以播放动画为例
+//        //如果动画有 4 张图（a,b,c,d），静止时在第一张 a
+//        //动起来: 开始 a 1s b 1s c 1s d 1s 取消动画/重复 ，共需要执行四次切换：切a，切b，切c，切d
+//        //需要切换三次：静态 1s 切 1s 切 1s 切 1s 还原
+//        command.run(); //第0秒执行 a
+//        for(int i=1;i<runTimesLimit;i++){ //runTimesLimit=4, //i=1,2,3
+//            //第 1，2，3 秒执行 b,c,d
+//            scheduledExecutorService.schedule(command,periodMs*(i),TimeUnit.MILLISECONDS);
+//        }
+//        //第4秒执行取消
+//        scheduledExecutorService.schedule(finishedTask,periodMs*(runTimesLimit+1),TimeUnit.MILLISECONDS);
+//    }
 }

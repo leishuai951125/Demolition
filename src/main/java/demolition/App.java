@@ -1,5 +1,6 @@
 package demolition;
 
+import org.checkerframework.checker.units.qual.A;
 import processing.core.PApplet;
 import processing.event.KeyEvent;
 
@@ -7,7 +8,7 @@ public class App extends PApplet {
     public static final int WIDTH = 720;
     public static final int HEIGHT = WIDTH;
 
-    public  final int FPS = 60;
+    public static final int FPS = 60;
 
     public Playgroud playgroud = null;
 
@@ -35,7 +36,27 @@ public class App extends PApplet {
         playgroud.draw(this);
     }
 
+    volatile int a=1;
     public static void main(String[] args) {
+//        App app=new App();
+//        new Thread(()->{
+//            while (true){
+//                try {
+//                    Thread.sleep(100);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                System.out.println("app.a++:"+app.a);
+//                app.a++;
+//            }
+//
+//        }).start();
+//        Public.RepartRunWithLimt(()->{
+//            System.out.println(app.a);
+//        },3000,3,()->{
+//            System.out.println("finish");
+//        });
+
         PApplet.main("demolition.App");
     }
 

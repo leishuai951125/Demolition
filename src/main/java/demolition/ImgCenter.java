@@ -8,8 +8,11 @@ import java.util.Map;
 
 class ImgCenter {
     private HashMap<Integer, PImage> gridTypeToImg = null;
-    private PImage []playerMotionImgUrls=null;
+    private final static String parentPath = "/Users/leishuai/Downloads/Demolition/src/main/resources/";
     private Map<Integer,PImage[]> playerAllActionPImages=new HashMap<>(4);
+    private Map<Integer,PImage[]> redEnemyAllActionPImages=new HashMap<>(4);
+    private PImage playerLifeImg;
+    private PImage clockImg;
 
     ImgCenter(PApplet imgLoader) {
         loadImg(imgLoader);
@@ -17,7 +20,6 @@ class ImgCenter {
 
     private void loadImg(PApplet imgLoader) {
         gridTypeToImg = new HashMap<Integer, PImage>(10);
-        String parentPath = "/Users/leishuai/Downloads/Demolition/src/main/resources/";
         gridTypeToImg.put(Public.GridType_Empty, imgLoader.loadImage(parentPath + "empty/empty.png"));
         gridTypeToImg.put(Public.GridType_Stone, imgLoader.loadImage(parentPath + "wall/solid.png"));
         gridTypeToImg.put(Public.GridType_Brick, imgLoader.loadImage(parentPath + "broken/broken.png"));
@@ -27,12 +29,20 @@ class ImgCenter {
         gridTypeToImg.put(Public.GridType_Bomb, imgLoader.loadImage(parentPath + "bomb/bomb.png"));
         gridTypeToImg.put(Public.GridType_BombExploded, imgLoader.loadImage(parentPath + "explosion/centre.png"));
         //加载玩家的动画
-        String []directionNames=new String[]{"_up","","_left","_right"};
+        playerAllActionPImages=loadMotionImgUrls(imgLoader,new String[]{"_up","","_left","_right"},"player/player%s%d.png");
+        redEnemyAllActionPImages=loadMotionImgUrls(imgLoader,new String[]{"_up","_down","_left","_right"},"red_enemy/red%s%d.png");
+        //title 上的动画
+        playerLifeImg=imgLoader.loadImage(parentPath + "icons/player.png");
+        clockImg=imgLoader.loadImage(parentPath + "icons/clock.png");
+    }
+    private Map<Integer,PImage[]> loadMotionImgUrls(PApplet imgLoader,String[] directionNames,String format){
+        Map<Integer,PImage[]> allActionPImages=new HashMap<>(4);
+        //加载动画
         for(int i=0;i<Public.DirectionKeyCodes.length;i++){
             String directionName=directionNames[i];
             PImage[] temp=new PImage[4];
             for(int j=0;j<4;j++){
-                String path=String.format(parentPath + "player/player%s%d.png",directionName,j+1);
+                String path=String.format(parentPath + format,directionName,j+1);
                 PImage img=imgLoader.loadImage(path);
                 if(img!=null){
                     temp[j]=img;
@@ -40,8 +50,9 @@ class ImgCenter {
                     System.out.println(path+"load img fail");
                 }
             }
-            playerAllActionPImages.put(Public.DirectionKeyCodes[i],temp);
+            allActionPImages.put(Public.DirectionKeyCodes[i],temp);
         }
+        return allActionPImages;
     }
 
     PImage getImgByGridType(int GridType) {
@@ -49,5 +60,14 @@ class ImgCenter {
     }
     Map<Integer,PImage[]> getPlayerMotionImgs(){
         return playerAllActionPImages;
+    }
+    Map<Integer,PImage[]> getRedEnemyMotionImgs(){
+        return redEnemyAllActionPImages;
+    }
+    PImage getPlayerLifeImg(){
+        return playerLifeImg;
+    }
+    PImage getClockImg(){
+        return clockImg;
     }
 }

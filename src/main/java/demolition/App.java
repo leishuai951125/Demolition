@@ -1,6 +1,7 @@
 package demolition;
 
 import processing.core.PApplet;
+import processing.core.PFont;
 import processing.event.KeyEvent;
 
 public class App extends PApplet {
@@ -22,8 +23,7 @@ public class App extends PApplet {
     //程序初始化时调用一次
     @Override
     public void setup() {
-        int yellow = color(238, 129, 0);
-        background(yellow);//黄色背景
+        textSize(Public.GridWith*2/3); //文字大小
         frameRate(FPS);
         Public.imgCenter = new ImgCenter(this);
         playgroud = new Playgroud();
@@ -44,7 +44,7 @@ public class App extends PApplet {
         if (Public.isDirectionKeyCode(event.getKeyCode())) { //是方向键
             playgroud.movePlayer(event.getKeyCode()); //移动玩家（修改玩家的位置）
         } else if (event.getKeyCode() == Public.KeyCode_ReleaseBomb) {  //是投炸弹的键（是空格键）
-            playgroud.releaseBomb(); //投放炸弹
+            playgroud.player.releaseBomb(playgroud); //投放炸弹
         }
     }
 }

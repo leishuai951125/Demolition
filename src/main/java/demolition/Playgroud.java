@@ -6,94 +6,91 @@ import processing.core.PImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 class Playgroud {
-    int[][] AllGrads = null; //value 是 GradType
+    int[][] AllGrads = null; //value 是 GradType,前面是y，后面是x
     final int x_count = Public.x_count;  //水平格子数
     final int y_count = Public.y_count;  //锤直格子数
-    private Player player = null; //玩家
-    private ArrayList<Location> redEnemyLocations = new ArrayList<Location>();
-
+    Player player = null; //玩家
+    private int playLife =5;
+    volatile int countdown = 180; //倒计时，单位秒
+//    ArrayList<Enemy> redEnemys = new ArrayList<Enemy>();
+    List<Enemy> redEnemys = new CopyOnWriteArrayList<Enemy>();
     Playgroud() {
         initAllGradsByConfigFile();
         startLoop();
     }
-
     void startLoop() {
-        new Thread(() -> {
-            while (true){
-                try {
-                    Thread.sleep(500); //一秒一次
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                //敌军行动
-                for (int i = 0; i < redEnemyLocations.size(); i++) {
-                    int rand = Public.random.nextInt(4); //生成0到4随机数
-                    int randomDirectionKeyCode = Public.DirectionKeyCodes[rand];
-                    Location redEnemyLocation = redEnemyLocations.get(i);
-                    //移动敌军
-                    redEnemyLocations.set(i, moveHuman(redEnemyLocation, randomDirectionKeyCode));
-                }
-            }
-        }).start();
+        //敌军行动
+        Public.scheduledExecutorService.scheduleAtFixedRate(() -> {
+            autoMoveEnemy();
+            bombCheck();
+        }, 0, 100, TimeUnit.MILLISECONDS);
+        //倒计时
+        Public.scheduledExecutorService.scheduleAtFixedRate(() -> {
+            countdown--;
+        }, 0, 1000, TimeUnit.MILLISECONDS);
+        //敌军自动扔炸弹
+        Public.scheduledExecutorService.scheduleAtFixedRate(() -> {
+            enemyAutoReleaseBomb();
+        }, 0, 3300, TimeUnit.MILLISECONDS);
     }
 
-    List<Location> getBombExplodedCover(Location bombLocation){
-        int y=bombLocation.y;
-        int x=bombLocation.x;
-        //计算爆炸范围
-        List<Location>  bombExplodedCover=new ArrayList<>(5); //爆炸范围
-        bombExplodedCover.add(new Location(x,y));
-        if(AllGrads[y-1][x]!=Public.GridType_Stone){//上面不是石头
-            bombExplodedCover.add(new Location(x,y-1));
-        }
-        if(AllGrads[y+1][x]!=Public.GridType_Stone){//下面不是石头
-            bombExplodedCover.add(new Location(x,y+1));
-        }
-        if(AllGrads[y][x-1]!=Public.GridType_Stone){//左边不是石头
-            bombExplodedCover.add(new Location(x-1,y));
-        }
-        if(AllGrads[y][x+1]!=Public.GridType_Stone){//右边不是石头
-            bombExplodedCover.add(new Location(x+1,y));
-        }
-        return bombExplodedCover;
+    private void enemyAutoReleaseBomb() {
+        int randomIndex= Public.random.nextInt(redEnemys.size());
+        redEnemys.get(randomIndex).releaseBomb(this);
     }
 
-    void releaseBomb() {
-        int y=player.location.y;
-        int x=player.location.x;
-        //放置炸弹
-        AllGrads[y][x] = Public.GridType_Bomb;
-        //-------------------------
-        //计算爆炸影响范围
-        List<Location>  bombExplodedCover=getBombExplodedCover(player.location);
-        //设置爆炸定时器
-        Public.scheduledExecutorService.schedule(()->{ //两秒后爆炸
-            for(Location coverLocation:bombExplodedCover){ //爆炸
-                if(player.location.equals(coverLocation)){ //炸到玩家，玩家死亡
-                    //todo 死亡逻辑
-                }
-                Iterator<Location> iterator=redEnemyLocations.iterator();
-                while (iterator.hasNext()){
-                    Location enemyLocation=iterator.next();
-                    if(enemyLocation.equals(coverLocation)){
-                        iterator.remove(); //敌军死亡
+    private void autoMoveEnemy() {
+        System.out.println("移动敌军start");
+        for(Human redEnemy:redEnemys){
+            int rand = Public.random.nextInt(4); //生成0到4随机数
+            int randomDirectionKeyCode = Public.DirectionKeyCodes[rand];
+            //移动敌军
+            moveHuman(redEnemy, randomDirectionKeyCode);
+        }
+        System.out.println("移动敌军end");
+    }
+
+    //炸弹效果碰撞检测
+    private void bombCheck() {
+        System.out.println("碰撞检测start");
+        for(int y=0;y<y_count;y++){
+            for(int x=0;x<x_count;x++){
+                int gradType=AllGrads[y][x];
+                if(gradType== Public.GridType_BombExploded){ //此处是炸弹
+                    Iterator<Enemy> iterator=redEnemys.iterator();
+                    while (iterator.hasNext()){
+                        Human human=iterator.next();
+                        //爆炸范围矩形
+                        Location leftTopPxLocation=getGradPxLocation(x,y);
+                        Location rightBottomLocation=leftTopPxLocation.clone();
+                        rightBottomLocation.x+=Public.GridWith;
+                        rightBottomLocation.y+=Public.GridWith;
+                        Rectangle coverRectangle=new Rectangle(leftTopPxLocation,rightBottomLocation);
+                        //人的矩形
+                        Location humanPxLocation=human.getPxLocation();
+                        Location humanRightBottomLocation=humanPxLocation.clone();
+                        humanRightBottomLocation.x+=Public.GridWith;
+                        humanRightBottomLocation.y+=Public.GridWith;
+                        Rectangle humanRectangle=new Rectangle(humanPxLocation,humanRightBottomLocation);
+                        if(humanRectangle.isOverlap(coverRectangle)){ //被炸
+                            System.out.println("被炸,human:"+human.location+"cover:"+new Location(x,y));
+                            System.out.println("被炸,human:"+humanPxLocation+"cover:"+leftTopPxLocation);
+                            System.out.println("=======");
+                            redEnemys.remove(human); //CopyOnWriteArrayList 不能用 iterator.remove();
+                        }
                     }
                 }
-                AllGrads[coverLocation.y][coverLocation.x] = Public.GridType_BombExploded;
             }
-            Public.scheduledExecutorService.schedule(()->{//一秒后爆炸效果清空
-                for(Location location:bombExplodedCover){
-                    AllGrads[location.y][location.x] = Public.GridType_Empty;
-                }
-            },1, TimeUnit.SECONDS);
-        },2, TimeUnit.SECONDS);
+        }
+        System.out.println("碰撞检测end");
     }
 
     //根据方向和可达性，返回移动后的位置
-    Location moveHuman(Location oldLocation, int directionKeyCode) {
+    Location getNewLocation(Location oldLocation, int directionKeyCode) {
         Location newLocation = oldLocation.clone(); //newLocation用来记录移动后的新位置
         switch (directionKeyCode) {
             case Public.DirectionKeyCode_Up: {
@@ -125,28 +122,75 @@ class Playgroud {
         return oldLocation;
     }
 
-    void movePlayer(int directionKeyCode) {
-        if(player.isMotion){ //运动中
+    void moveHuman(Human human, int directionKeyCode) {
+        if (human.isMotion) { //运动中
             //不做任何事
             return;
         }
-        Location newlocation=moveHuman(player.location, directionKeyCode);
-        if(!newlocation.equals(player.location)){//位置移动，播放动画
-            player.doOnceMove(newlocation,directionKeyCode);
+        Location newlocation = getNewLocation(human.location, directionKeyCode);
+        if (!newlocation.equals(human.location)) {//位置移动，播放动画
+            human.doOnceMove(newlocation, directionKeyCode);
         }
     }
 
-    void draw(PApplet canvas) {
-        int x, y;
+    void movePlayer(int directionKeyCode) {
+        moveHuman(player, directionKeyCode);
+    }
 
+    void drawTitle(PApplet canvas){
+        canvas.textSize(Public.GridWith*2/3);
+        canvas.color(Public.GridWith*2/3);
+        int textTopPx=Public.GridWith*2/3;
+        int imgTopPx=Public.GridWith/2;
+        //生命
+        int playerLifeImgLeftPx=Public.GridWith*4;
+        canvas.image(Public.imgCenter.getPlayerLifeImg(),playerLifeImgLeftPx,imgTopPx,Public.GridWith,Public.GridWith);
+        int playerLifeTextLeftPx=Public.GridWith*5+Public.GridWith/3;
+        canvas.text("x "+Integer.toString(playLife),playerLifeTextLeftPx,textTopPx,Public.GridWith*4,Public.GridWith*3);
+        //时间
+        int clockImgLeftPx=Public.GridWith*8;
+        int clockTextLeftPx=Public.GridWith*9+Public.GridWith/3;
+        canvas.image(Public.imgCenter.getClockImg(),clockImgLeftPx,imgTopPx,Public.GridWith,Public.GridWith);
+        canvas.text(Integer.toString(countdown),clockTextLeftPx,textTopPx,Public.GridWith*5,Public.GridWith);
+    }
+
+    void resetBackground(PApplet canvas){
+        canvas.clear();
+        int yellow = canvas.color(238, 129, 0);
+        canvas.background(yellow);//黄色背景
+    }
+
+    void draw(PApplet canvas) {
+        //重置背景
+        resetBackground(canvas);
+        //标题
+        drawTitle(canvas);
+        //绘制地图，包括：草地、墙、砖、炸弹
+        drawGrads(canvas);
+
+        //绘制敌人
+        for (Enemy redEnemy : redEnemys) {
+            redEnemy.draw(canvas);
+        }
+
+        //绘制玩家
+        player.draw(canvas);
+    }
+
+    Location getGradPxLocation(int x,int y){
+        return new Location(x * Public.GridWith,y * Public.GridWith + Public.TopSpaceHeightPx);
+    }
+
+    //绘制地图,包括：草地、墙、砖、炸弹
+    private void drawGrads(PApplet canvas) {
         PImage emptyImg = Public.imgCenter.getImgByGridType(Public.GridType_Empty);
-        //绘制地图,包括：草地、墙、砖、炸弹
         for (int i = 0; i < y_count; i++) {
             for (int j = 0; j < x_count; j++) {
                 int gridType = AllGrads[i][j];
                 PImage img = Public.imgCenter.getImgByGridType(gridType);
-                x = j * Public.GridWith;
-                y = i * Public.GridWith + Public.TopSpaceHeightPx;
+                Location pxLocation=getGradPxLocation(j,i);
+                int x = pxLocation.x;
+                int y = pxLocation.y;
                 if (gridType == Public.GridType_Bomb || gridType == Public.GridType_BombExploded) {
                     //绘制炸弹时需要先拿背景填充一下
                     canvas.image(emptyImg, x, y, Public.GridWith, Public.GridWith);
@@ -154,93 +198,54 @@ class Playgroud {
                 canvas.image(img, x, y, Public.GridWith, Public.GridWith);
             }
         }
-
-
-        //绘制敌人
-        for (Location redEnemyLocation : redEnemyLocations) {
-            PImage enemyImg = Public.imgCenter.getImgByGridType(Public.GridType_RedEnemy);
-            x = redEnemyLocation.x * Public.GridWith;
-            y = redEnemyLocation.y * Public.GridWith + Public.TopSpaceHeightPx;
-            canvas.image(enemyImg, x, y - Public.HumanOverstep, Public.GridWith, Public.GridWith + Public.HumanOverstep);
-        }
-
-        player.draw(canvas);
-//        //绘制玩家
-//        PImage img = Public.imgCenter.getImgByGridType(Public.GridType_Player);
-//        x = player.location.x * Public.GridWith;
-//        y = player.location.y * Public.GridWith + Public.TopSpaceHeightPx;
-//        canvas.image(img, x, y - Public.HumanOverstep, Public.GridWith, Public.GridWith + Public.HumanOverstep);
     }
 
     //按配置文件生成地图
-    void initAllGradsByConfigFile(){
+    void initAllGradsByConfigFile() {
         String parentPath = "/Users/leishuai/Downloads/Demolition/src/main/resources/";
-        String level1MapFilePath = parentPath+"/game_config/level1.txt";
-        File file=new File(level1MapFilePath);
-        Scanner sc=null;
+        String level1MapFilePath = parentPath + "/game_config/level1.txt";
+        File file = new File(level1MapFilePath);
+        Scanner sc = null;
         try {
-            sc=new Scanner(file);
+            sc = new Scanner(file);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        List<String> allLine=new ArrayList<>(10);
-        while (sc.hasNextLine()){
+        List<String> allLine = new ArrayList<>(10);
+        while (sc.hasNextLine()) {
             allLine.add(sc.nextLine());
         }
         sc.close();
-        Map<Character,Integer> charToGradType =new HashMap<Character,Integer>(){
+        Map<Character, Integer> charToGradType = new HashMap<Character, Integer>() {
             {
-                put('W',Public.GridType_Stone); //石头
-                put('P',Public.GridType_Player); //玩家
-                put(' ',Public.GridType_Empty); //空白
-                put('B',Public.GridType_Brick); //砖块
-                put('Y',Public.GridType_RedEnemy); //敌军
-                put('R',Public.GridType_RedEnemy); //敌军 todo
-                put('G',Public.GridType_Destination); //终点
+                put('W', Public.GridType_Stone); //石头
+                put('P', Public.GridType_Player); //玩家
+                put(' ', Public.GridType_Empty); //空白
+                put('B', Public.GridType_Brick); //砖块
+                put('Y', Public.GridType_RedEnemy); //敌军
+                put('R', Public.GridType_RedEnemy); //敌军 todo
+                put('G', Public.GridType_Destination); //终点
             }
         };
-        AllGrads=new int[y_count][x_count];
-        for(int y=0;y<y_count;y++){
-            for(int x=0;x<x_count;x++){
-                char c=allLine.get(y).charAt(x);
-                int gradType=charToGradType.get(c);
-                switch (gradType){
-                    case Public.GridType_Player:{
-                        player=new Player(new Location(x,y));
+        AllGrads = new int[y_count][x_count];
+        for (int y = 0; y < y_count; y++) {
+            for (int x = 0; x < x_count; x++) {
+                char c = allLine.get(y).charAt(x);
+                int gradType = charToGradType.get(c);
+                switch (gradType) {
+                    case Public.GridType_Player: {
+                        player = new Player(new Location(x, y));
                         break;
                     }
-                    case Public.GridType_RedEnemy:{
-                        redEnemyLocations.add(new Location(x,y));
+                    case Public.GridType_RedEnemy: {
+                        redEnemys.add(new Enemy(new Location(x, y)));
                         break;
                     }
-                    default:{
-                        AllGrads[y][x]=gradType;
+                    default: {
+                        AllGrads[y][x] = gradType;
                     }
                 }
             }
         }
     }
-    //随机生成地图
-//    void randomInitAllGrads() {
-//        AllGrads = new int[y_count][x_count]; //demo上的大小
-//        for (int i = 0; i < y_count; i++) {
-//            AllGrads[i][0] = Public.GridType_Stone;
-//            AllGrads[i][x_count - 1] = Public.GridType_Stone;
-//        }
-//        for (int j = 0; j < x_count; j++) {
-//            AllGrads[0][j] = Public.GridType_Stone;
-//            AllGrads[y_count - 1][j] = Public.GridType_Stone;
-//        }
-//        for(int j=4;j<12;j++){
-//            AllGrads[4][j] = Public.GridType_Brick;
-//            AllGrads[6][j] = Public.GridType_Brick;
-//            AllGrads[8][j] = Public.GridType_Brick;
-//        }
-//        AllGrads[y_count - 2][x_count - 2] = Public.GridType_Destination;
-//        //玩家
-//        playLocation = new Location(1, 1); //玩家不存在AllGrads，因为玩家和终点可能重合
-//        //敌军
-//        redEnemyLocations.add(new Location(3, 3));
-//        redEnemyLocations.add(new Location(9, 10));
-//    }
 }

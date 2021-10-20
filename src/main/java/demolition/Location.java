@@ -27,52 +27,37 @@ class Location {
 }
 
 class Rectangle { //矩形
-   Location leftTopLocation,rightBottomLocation ;
-   Rectangle(Location leftTopLocation,Location rightBottomLocation){
-       this.leftTopLocation=leftTopLocation;
-       this.rightBottomLocation=rightBottomLocation;
-   }
-   //矩形是否包含某个点
-   boolean containPoint(Location point){
-       return point.y>=leftTopLocation.y && point.x>leftTopLocation.x &&
-       point.y<rightBottomLocation.y && point.x<rightBottomLocation.x;
-   }
-   //是否有重叠
-   boolean isOverlap(Rectangle rectangle){
-       if(equals(rectangle)){ //完全重叠
-           return true;
-       }
-       int width=rectangle.rightBottomLocation.x-rectangle.leftTopLocation.x;
-       int height=rectangle.rightBottomLocation.y-rectangle.leftTopLocation.y;
-//       Location points[]=new Location[]{
-//               rectangle.rightBottomLocation,
-//               rectangle.leftTopLocation,
-//               new Location(rectangle.leftTopLocation.x,rectangle.leftTopLocation.y+height),
-//               new Location(rectangle.leftTopLocation.x+width,rectangle.leftTopLocation.y)
-//       };
-       //左右方向两个矩形有重叠
-       if(this.leftTopLocation.x>rectangle.leftTopLocation.x
-               && this.leftTopLocation.x<rectangle.leftTopLocation.x+width
-               && this.leftTopLocation.y==rectangle.leftTopLocation.y){
-           return true;
-       }
-       //垂直方向两个矩形有重叠
+    Location leftTopLocation,rightBottomLocation ;
+    Rectangle(Location leftTopLocation,Location rightBottomLocation){
+        this.leftTopLocation=leftTopLocation;
+        this.rightBottomLocation=rightBottomLocation;
+    }
 
-       if(this.leftTopLocation.y>rectangle.leftTopLocation.y
-               && this.leftTopLocation.y<rectangle.leftTopLocation.y+height
-               && this.leftTopLocation.x==rectangle.leftTopLocation.x){
-           return true;
-       }
-//       for(int i=0;i<points.length;i++){
-//           Location point=points[i];
-//           if(this.containPoint(point)){
-//               return true;
-//           }
-//       }
-       return false;
-   }
-   boolean equals(Rectangle rectangle){
-      return this.leftTopLocation.equals(rectangle.leftTopLocation) &&
-              this.rightBottomLocation.equals(rectangle.rightBottomLocation);
-   }
+    //是否有重叠
+    boolean isOverlap(Rectangle rectangle){
+        if(equals(rectangle)){ //完全重叠
+            return true;
+        }
+        int width=rectangle.rightBottomLocation.x-rectangle.leftTopLocation.x;
+        int height=rectangle.rightBottomLocation.y-rectangle.leftTopLocation.y;
+        //左右方向两个矩形有重叠
+        if(this.leftTopLocation.x>rectangle.leftTopLocation.x
+                && this.leftTopLocation.x<rectangle.leftTopLocation.x+width
+                && this.leftTopLocation.y==rectangle.leftTopLocation.y){
+            return true;
+        }
+        //垂直方向两个矩形有重叠
+
+        if(this.leftTopLocation.y>rectangle.leftTopLocation.y
+                && this.leftTopLocation.y<rectangle.leftTopLocation.y+height
+                && this.leftTopLocation.x==rectangle.leftTopLocation.x){
+            return true;
+        }
+
+        return false;
+    }
+    boolean equals(Rectangle rectangle){
+        return this.leftTopLocation.equals(rectangle.leftTopLocation) &&
+                this.rightBottomLocation.equals(rectangle.rightBottomLocation);
+    }
 }

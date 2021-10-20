@@ -3,12 +3,11 @@ package demolition;
 import processing.core.PApplet;
 import processing.event.KeyEvent;
 
-
 public class App extends PApplet {
     public static final int WIDTH = 720;
     public static final int HEIGHT = WIDTH;
 
-    public static final int FPS = 60;
+    public static final int FPS = 10;
 
     public Playgroud playgroud = null;
 
@@ -23,7 +22,7 @@ public class App extends PApplet {
     //程序初始化时调用一次
     @Override
     public void setup() {
-        textSize(Public.GridWith*2/3); //文字大小
+        textSize(Public.GridWidth *2/3); //文字大小
         frameRate(FPS);
         Public.imgCenter = new ImgCenter(this);
         playgroud = new Playgroud();
@@ -48,4 +47,3 @@ public class App extends PApplet {
         }
     }
 }
-

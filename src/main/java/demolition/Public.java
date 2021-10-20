@@ -9,9 +9,9 @@ class Public {
     public static ImgCenter imgCenter = null;
     public static final int x_count = 15;  //水平格子数
     public static final int y_count = 13;  //锤直格子数
-    public static int GridWith = App.WIDTH/x_count;  //480/15=32
-    final static int TopSpaceHeightPx = Public.GridWith * 2;
-    public static int HumanOverstep = Public.GridWith / 2;
+    public static int GridWidth = App.WIDTH/x_count;  //480/15=32
+    final static int TopSpaceHeightPx = Public.GridWidth * 2;
+    public static int HumanOverstep = Public.GridWidth / 2;
     // GridType 常量定义
     static final int GridType_Empty = 0; //
     static final int GridType_Stone = 1; //石头
@@ -19,7 +19,7 @@ class Public {
     static final int GridType_Destination = 3; //终点
     static final int GridType_Player = 4; //玩家
     static final int GridType_RedEnemy = 5; //红色敌军
-    //    static final int GridType_YellowEnemy = 6; //黄色敌军
+    static final int GridType_YellowEnemy = 6; //黄色敌军
     static final int GridType_Bomb = -1; //炸弹
     static final int GridType_BombExploded = -2; //爆炸的炸弹
     // Direction 方向常量定义
@@ -28,6 +28,7 @@ class Public {
     static final int DirectionKeyCode_Left = java.awt.event.KeyEvent.VK_LEFT;
     static final int DirectionKeyCode_Right = java.awt.event.KeyEvent.VK_RIGHT;
     static final int[] DirectionKeyCodes = new int[]{DirectionKeyCode_Up, DirectionKeyCode_Down, DirectionKeyCode_Left, DirectionKeyCode_Right};
+    static final int[] directsCycle = new int[]{DirectionKeyCode_Down,DirectionKeyCode_Left,DirectionKeyCode_Up,DirectionKeyCode_Right};
     //
     static final int KeyCode_ReleaseBomb = java.awt.event.KeyEvent.VK_SPACE;
 

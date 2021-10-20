@@ -1,9 +1,11 @@
 package demolition;
 
+import demolition3.RedEnemy;
 import processing.core.PApplet;
 import processing.core.PImage;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -11,11 +13,11 @@ import java.util.concurrent.TimeUnit;
 class Human {
     Location location;//坐标
     Location locationPxOffset=new Location(0,0);//坐标像素偏移量
-//  PImage[] 运动的图片,a,b,c,d。 静止时在第一张
+    //  PImage[] 运动的图片,a,b,c,d。 静止时在第一张
     private Map<Integer, PImage[]> allActionPImages;
-    private int nowDirect; //当前的方向
+    int nowDirect; //当前的方向
     private volatile int motionImgIndex=0;//运动图片帧
-    private int motionCostMs=300;//一次运动持续时间
+    private int motionCostMs=500;//一次运动持续时间
     boolean isMotion=false;//是否在运动中
     Human(Location location,Map<Integer, PImage[]> allActionPImages){
         this.location=location;
@@ -35,8 +37,8 @@ class Human {
         nowDirect=directionKeyCode;
         final int motionFPS=4;
         int periodMs=motionCostMs/ motionFPS;
-        int oneFrame_x_offset_=(newLocation.x-location.x)*Public.GridWith/motionFPS;
-        int oneFrame_y_offset_=(newLocation.y-location.y)*Public.GridWith/motionFPS;
+        int oneFrame_x_offset_=(newLocation.x-location.x)*Public.GridWidth /motionFPS;
+        int oneFrame_y_offset_=(newLocation.y-location.y)*Public.GridWidth /motionFPS;
         //运动开始
         isMotion=true; //运动开始
         motionImgIndex=0;
@@ -58,11 +60,11 @@ class Human {
         //绘制玩家
         PImage img = getImg();
         Location pxLocation=getPxLocation();
-        canvas.image(img, pxLocation.x, pxLocation.y - Public.HumanOverstep, Public.GridWith, Public.GridWith + Public.HumanOverstep);
+        canvas.image(img, pxLocation.x, pxLocation.y - Public.HumanOverstep, Public.GridWidth, Public.GridWidth + Public.HumanOverstep);
     }
     Location getPxLocation(){
-        int x = location.x * Public.GridWith+locationPxOffset.x;
-        int y = location.y * Public.GridWith + Public.TopSpaceHeightPx+locationPxOffset.y;
+        int x = location.x * Public.GridWidth +locationPxOffset.x;
+        int y = location.y * Public.GridWidth + Public.TopSpaceHeightPx+locationPxOffset.y;
         return new Location(x,y);
     }
 
@@ -81,14 +83,27 @@ class Human {
                 if (location.equals(coverLocation)) { //炸到玩家，玩家死亡
                     //todo 死亡逻辑
                 }
-//                Iterator<Enemy> iterator = playgroud.redEnemys.iterator();
+                //简单的碰撞检测
+//                Iterator<REnemy> iterator = playgroud.redEnemys.iterator();
 //                while (iterator.hasNext()) {
-//                    Enemy enemy = iterator.next();
-//                     if (enemy.location.equals(coverLocation)) {
+//                    REnemy enemy = iterator.next();
+//                    if (enemy.location.equals(coverLocation)) {
 //                        System.out.println("敌军死亡");
-//                        iterator.remove(); //敌军死亡
+////                        iterator.remove(); //敌军死亡
+//                        playgroud.redEnemys.remove(enemy); //敌军死亡
 //                    }
 //                }
+//                if(playgroud.redEnemys.size()!=0){
+//                    REnemy redEnemy=playgroud.redEnemys.get(0);
+//                    if(redEnemy!=null){
+//                        if(redEnemy.location.equals(coverLocation)){
+//                            playgroud.redEnemys.clear();
+//                        }
+//                    }
+//                }
+                if(playgroud.yEnemy.location.equals(coverLocation)){
+                    playgroud.yEnemy=null;
+                }
                 AllGrads[coverLocation.y][coverLocation.x] = Public.GridType_BombExploded;
             }
             Public.scheduledExecutorService.schedule(() -> {//一秒后爆炸效果清空
@@ -128,9 +143,15 @@ class Player extends Human{
     }
 }
 
-class Enemy extends Human{
-    Enemy(Location location){
+class REnemy extends Human{
+    REnemy(Location location){
         super(location,Public.imgCenter.getRedEnemyMotionImgs());
+    }
+}
+
+class YEnemy extends Human{
+    YEnemy(Location location){
+        super(location,Public.imgCenter.getYellowEnemyMotionImgs());
     }
 }
 

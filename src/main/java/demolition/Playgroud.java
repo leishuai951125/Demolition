@@ -34,11 +34,13 @@ class Playgroud {
         Public.scheduledExecutorService.scheduleAtFixedRate(() -> {
             countdown--;
         }, 0, 1000, TimeUnit.MILLISECONDS);
-        //敌军自动扔炸弹
-        Public.scheduledExecutorService.scheduleAtFixedRate(() -> {
-            enemyAutoReleaseBomb();
-        }, 0, 3300, TimeUnit.MILLISECONDS);
-        Public.scheduledExecutorService.scheduleAtFixedRate(this::enemyAutoReleaseBomb, 0, 3300, TimeUnit.MILLISECONDS);
+//        //敌军自动扔炸弹
+//        Public.scheduledExecutorService.scheduleAtFixedRate(() -> {
+//            enemyAutoReleaseBomb();
+//        }, 0, 3300, TimeUnit.MILLISECONDS);
+//        Public.scheduledExecutorService.scheduleAtFixedRate(()->{
+//            enemyAutoReleaseBomb();
+//        }, 0, 3300, TimeUnit.MILLISECONDS);
     }
 
     private void enemyAutoReleaseBomb() {

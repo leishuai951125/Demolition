@@ -23,6 +23,14 @@ class Playgroud {
         initAllGradsByConfigFile();
         startLoop();
     }
+    Location getDestination(){
+        return new Location(x_count-1,y_count-1);
+    }
+    //开始下一关
+    void startNextGound(){
+        //加载下一关地图
+        //重置所有对象的值
+    }
     void startLoop() {
         //敌军行动
         Public.scheduledExecutorService.scheduleAtFixedRate(() -> {

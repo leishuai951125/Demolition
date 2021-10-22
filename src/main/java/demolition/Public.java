@@ -43,7 +43,10 @@ class Public {
         }
         return false;
     }
-
+    //游戏状态
+    static final int PlayStatus_Playing = 0; //进行中
+    static final int PlayStatus_Fail = -1; //失败
+    static final int PlayStatus_PassAll = 1; //通关
     //随机数生成器
     public static Random random = new Random();
     //定时任务执行器

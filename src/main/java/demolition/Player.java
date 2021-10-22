@@ -48,10 +48,6 @@ class Human {
 //                    System.out.println("一次运动结束");
                     isMotion=false;
                     location=newLocation;
-                    //此处 todo 检测是否到达终点
-//                    if(newLocation.equals(playgroud.getDestination())){
-////                        playgroud.startNextGound();
-////                    }
                 }
             },periodMs*i, TimeUnit.MILLISECONDS);
         }

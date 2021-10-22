@@ -3,7 +3,6 @@ package demolition;
 import processing.core.PApplet;
 import processing.core.PImage;
 
-import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
@@ -17,24 +16,61 @@ class Playgroud {
     final int y_count = Public.y_count;  //锤直格子数
     Player player = null; //玩家
     private int playLife = 5;
-    volatile int countdown = 180; //倒计时，单位秒
-    Map<Human, String> redEnemys = new ConcurrentHashMap<>();
-    Map<Human, String> yEnemys = new ConcurrentHashMap<>();
-    Location destinationLocation=null;
+    private int nowLevel = 0;
+    private int maxLevel = 0;
+    private int playStatus = 0;
+    volatile int countdown = 0; //倒计时，单位秒
+    Map<Human, String> redEnemys = null;
+    Map<Human, String> yEnemys = null;
+    Location destinationLocation = null;
+
     Playgroud() {
-        initAllGradsByConfigFile();
+        playStatus = Public.PlayStatus_Playing;
+//        playStatus=Public.PlayStatus_PassAll;
+        nowLevel = 1;
+        maxLevel = 2;
+        reset();
+        loadAllGradsByConfigFile();
         startLoop();
     }
 
-    //是否为终点
-    boolean isDestination(Location location) {
-        return location!=null && location.equals(destinationLocation);
+    //重置
+    void reset() {
+        AllGrads = new int[y_count][x_count];
+        redEnemys = new ConcurrentHashMap<>();
+        yEnemys = new ConcurrentHashMap<>();
+        countdown = 181;
+    }
+
+    void checkGameOver() {
+        if (countdown == 0) {
+            playStatus = Public.PlayStatus_Fail;
+        }
+    }
+
+    void checkPassOneLevel() {
+        if (isArriveDest()) {
+            if (nowLevel == maxLevel) { //通关
+                playStatus = Public.PlayStatus_PassAll;
+            } else { //下一关
+                startNextGound();
+            }
+        }
+    }
+
+    //玩家是否为终点
+    boolean isArriveDest() {
+        return player != null && player.location.equals(destinationLocation);
     }
 
     //开始下一关
     void startNextGound() {
-        //加载下一关地图
         //重置所有对象的值
+        reset();
+        //关卡加1
+        nowLevel++;
+        //按关卡加载地图
+        loadAllGradsByConfigFile();
     }
 
     //只是打个日志
@@ -51,10 +87,12 @@ class Playgroud {
         //倒计时
         Public.scheduledExecutorService.scheduleAtFixedRate(() -> {
             countdown--;
+            checkGameOver();
         }, 0, 1000, TimeUnit.MILLISECONDS);
         //敌军行动
         Public.scheduledExecutorService.scheduleAtFixedRate(() -> {
-            doFunc(this::bombCheck, "bombCheck");
+            doFunc(this::checkPassOneLevel, "checkPass"); //通过检测
+            doFunc(this::bombCheck, "bombCheck"); //炸弹效果检测
             doFunc(this::moveAllYEnemy, "moveAllYEnemy");
             doFunc(this::moveAllRedEnemy, "moveAllRedEnemy");
 //            bombCheck();
@@ -194,7 +232,7 @@ class Playgroud {
     }
 
 
-    //炸弹效果碰撞检测(复杂的碰撞检测)
+    //炸弹效果碰撞检测
     private void bombCheck() {
 //        System.out.println("碰撞检测start");
         for (int y = 0; y < y_count; y++) {
@@ -218,26 +256,12 @@ class Playgroud {
                         yEnemys.remove(enemy);
                     }
                 }
-//                int gradType=AllGrads[y][x];
-//                if(gradType== Public.GridType_BombExploded){ //此处是炸弹
-//                    Iterator<REnemy> iterator=redEnemys.iterator();
-//                    while (iterator.hasNext()){
-//                        Human human=iterator.next();
-//                        //爆炸范围矩形
-//                        if (checkBombIsCoverEnemy(new Location(x,y),human)){
-//                            redEnemys.remove(human);
-//                        }
-//                    }
-//                    if(yEnemy!=null&&checkBombIsCoverEnemy(new Location(x,y),yEnemy)){
-//                        yEnemy=null; //死掉
-//                    }
-//                }
             }
         }
 //        System.out.println("碰撞检测end");
     }
 
-    //判断炸弹是否炸到了敌人
+    //判断炸弹是否炸到了敌人，这是一个复杂的碰撞检测
     boolean checkBombIsCoverEnemy(Location bombLocation, Human human) {
         Location leftTopPxLocation = getGradPxLocation(bombLocation.x, bombLocation.y);
         Location rightBottomLocation = leftTopPxLocation.clone();
@@ -293,7 +317,7 @@ class Playgroud {
 
     void drawTitle(PApplet canvas) {
         canvas.textSize(Public.GridWidth * 2 / 3);
-        canvas.color(Public.GridWidth * 2 / 3);
+//        canvas.color(Public.GridWidth * 2 / 3);
         int textTopPx = Public.GridWidth * 2 / 3;
         int imgTopPx = Public.GridWidth / 2;
         //生命
@@ -314,14 +338,28 @@ class Playgroud {
         canvas.background(yellow);//黄色背景
     }
 
+    void drawEnd(PApplet canvas) {
+        canvas.textSize(Public.GridWidth);
+        int textTopPx = Public.GridWidth * y_count / 2;
+        int LeftPx = Public.GridWidth * 5;
+        String contentText = playStatus == Public.PlayStatus_Fail ? "GAME OVER" : "YOU WIN";
+        canvas.text(contentText, LeftPx, textTopPx, Public.GridWidth * 7, Public.GridWidth * 3);
+
+    }
+
     void draw(PApplet canvas) {
         //重置背景
         resetBackground(canvas);
+        //结束
+        if (playStatus == Public.PlayStatus_Fail || playStatus == Public.PlayStatus_PassAll) {
+            drawEnd(canvas);
+            return;
+        }
+        //-----以下是游戏中----
         //标题
         drawTitle(canvas);
         //绘制地图，包括：草地、墙、砖、炸弹
         drawGrads(canvas);
-
         //绘制敌人
         for (Map.Entry<Human, String> kv : redEnemys.entrySet()) {
             kv.getKey().draw(canvas);
@@ -329,7 +367,6 @@ class Playgroud {
         for (Map.Entry<Human, String> kv : yEnemys.entrySet()) {
             kv.getKey().draw(canvas);
         }
-
         //绘制玩家
         player.draw(canvas);
     }
@@ -340,12 +377,22 @@ class Playgroud {
 
     //绘制地图,包括：草地、墙、砖、炸弹
     private void drawGrads(PApplet canvas) {
+        //终点
+        PImage destImg = Public.imgCenter.getImgByGridType(Public.GridType_Destination);
+        Location destPxLocation = getGradPxLocation(destinationLocation.x, destinationLocation.y);
+        canvas.image(destImg, destPxLocation.x, destPxLocation.y, Public.GridWidth, Public.GridWidth);
+        //地图
         PImage emptyImg = Public.imgCenter.getImgByGridType(Public.GridType_Empty);
-        for (int i = 0; i < y_count; i++) {
-            for (int j = 0; j < x_count; j++) {
-                int gridType = AllGrads[i][j];
+        for (int y_index = 0; y_index < y_count; y_index++) {
+            for (int x_index = 0; x_index < x_count; x_index++) {
+                int gridType = AllGrads[y_index][x_index];
+                if (gridType == Public.GridType_Empty && new Location(x_index, y_index).equals(destinationLocation)) {
+                    //空白地图不应该覆盖终点的图标
+                    continue;
+                }
+                //绘制
                 PImage img = Public.imgCenter.getImgByGridType(gridType);
-                Location pxLocation = getGradPxLocation(j, i);
+                Location pxLocation = getGradPxLocation(x_index, y_index);
                 int x = pxLocation.x;
                 int y = pxLocation.y;
                 if (gridType == Public.GridType_Bomb || gridType == Public.GridType_BombExploded) {
@@ -355,20 +402,13 @@ class Playgroud {
                 canvas.image(img, x, y, Public.GridWidth, Public.GridWidth);
             }
         }
-        //终点
-        int destGradType=AllGrads[destinationLocation.y][destinationLocation.x];
-        if(destGradType==Public.GridType_Empty){
-            PImage destImg=Public.imgCenter.getImgByGridType(Public.GridType_Destination);
-            Location destPxLocation=getGradPxLocation(destinationLocation.x, destinationLocation.y);
-            canvas.image(destImg, destPxLocation.x, destPxLocation.x, Public.GridWidth, Public.GridWidth);
-        }
     }
 
-    //按配置文件生成地图
-    void initAllGradsByConfigFile() {
+    //根据关卡从配置文件生成地图
+    void loadAllGradsByConfigFile() {
         String parentPath = "/Users/leishuai/Downloads/Demolition/";
 //        String parentPath = "/USYD/INFO1113/DemolitionProject/";
-        String level1MapFilePath = parentPath + "level1.txt";
+        String level1MapFilePath = parentPath + String.format("level%d.txt", nowLevel);
         File file = new File(level1MapFilePath);
         Scanner sc = null;
         try {
@@ -380,7 +420,6 @@ class Playgroud {
         while (sc.hasNextLine()) {
             allLine.add(sc.nextLine());
         }
-        sc.close();
         Map<Character, Integer> charToGradType = new HashMap<Character, Integer>() {
             {
                 put('W', Public.GridType_Stone); //石头
@@ -392,9 +431,9 @@ class Playgroud {
                 put('G', Public.GridType_Destination); //终点
             }
         };
-        AllGrads = new int[y_count][x_count];
-        for (int y = 0; y < y_count; y++) {
-            for (int x = 0; x < x_count; x++) {
+        sc.close();
+        for (int y = 0; y < allLine.size(); y++) {
+            for (int x = 0; x < allLine.get(y).length(); x++) {
                 char c = allLine.get(y).charAt(x);
                 int gradType = charToGradType.get(c);
                 switch (gradType) {
@@ -410,8 +449,8 @@ class Playgroud {
                         yEnemys.put(new YEnemy(new Location(x, y)), "");
                         break;
                     }
-                    case Public.GridType_Destination:{
-                        destinationLocation=new Location(x,y);
+                    case Public.GridType_Destination: {
+                        destinationLocation = new Location(x, y);
                         break;
                     }
                     default: {

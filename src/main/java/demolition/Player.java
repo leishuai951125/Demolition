@@ -4,10 +4,7 @@ import demolition3.RedEnemy;
 import processing.core.PApplet;
 import processing.core.PImage;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 class Human {
@@ -84,30 +81,6 @@ class Human {
         //设置爆炸定时器
         Public.scheduledExecutorService.schedule(() -> { //两秒后爆炸
             for (Location coverLocation : bombExplodedCover) {
-                if (location.equals(coverLocation)) { //炸到玩家，玩家死亡
-                    //todo 死亡逻辑
-                }
-                //简单的碰撞检测
-//                Iterator<REnemy> iterator = playgroud.redEnemys.iterator();
-//                while (iterator.hasNext()) {
-//                    REnemy enemy = iterator.next();
-//                    if (enemy.location.equals(coverLocation)) {
-//                        System.out.println("敌军死亡");
-////                        iterator.remove(); //敌军死亡
-//                        playgroud.redEnemys.remove(enemy); //敌军死亡
-//                    }
-//                }
-//                if(playgroud.redEnemys.size()!=0){
-//                    REnemy redEnemy=playgroud.redEnemys.get(0);
-//                    if(redEnemy!=null){
-//                        if(redEnemy.location.equals(coverLocation)){
-//                            playgroud.redEnemys.clear();
-//                        }
-//                    }
-//                }
-                if(playgroud.yEnemy.location.equals(coverLocation)){
-                    playgroud.yEnemy=null;
-                }
                 AllGrads[coverLocation.y][coverLocation.x] = Public.GridType_BombExploded;
             }
             Public.scheduledExecutorService.schedule(() -> {//一秒后爆炸效果清空

@@ -3,11 +3,15 @@ package demolition;
 import processing.core.PApplet;
 import processing.event.KeyEvent;
 
+import java.util.concurrent.TimeUnit;
+
 public class App extends PApplet {
     public static final int WIDTH = 720;
     public static final int HEIGHT = WIDTH;
 
     public static final int FPS = 10;
+    public static int drawTimes = 0;
+
 
     public Playgroud playgroud = null;
 
@@ -31,7 +35,14 @@ public class App extends PApplet {
     //被循环调用
     @Override
     public void draw() {
-        playgroud.draw(this);
+        try {
+            if(++drawTimes%(FPS*10)==0){
+                System.out.println("drawTimes:"+drawTimes);
+            }
+            playgroud.draw(this);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {
@@ -40,10 +51,12 @@ public class App extends PApplet {
 
     @Override
     public void keyPressed(KeyEvent event) {
+//        System.out.println("keyPressed start");
         if (Public.isDirectionKeyCode(event.getKeyCode())) { //是方向键
             playgroud.movePlayer(event.getKeyCode()); //移动玩家（修改玩家的位置）
         } else if (event.getKeyCode() == Public.KeyCode_ReleaseBomb) {  //是投炸弹的键（是空格键）
             playgroud.player.releaseBomb(playgroud); //投放炸弹
         }
+//        System.out.println("keyPressed end");
     }
 }

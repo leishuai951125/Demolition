@@ -3,13 +3,11 @@ package demolition;
 import processing.core.PApplet;
 import processing.event.KeyEvent;
 
-import java.util.concurrent.TimeUnit;
-
 public class App extends PApplet {
-    public static final int WIDTH = 720;
+    public static final int WIDTH = GameConfig.AppPxWidth;
     public static final int HEIGHT = WIDTH;
 
-    public static final int FPS = 10;
+    public static final int FPS = GameConfig.FPS;
     public static int drawTimes = 0;
 
 

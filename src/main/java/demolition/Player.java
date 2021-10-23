@@ -14,7 +14,7 @@ class Human {
     private Map<Integer, PImage[]> allActionPImages;
     int nowDirect; //当前的方向
     private volatile int motionImgIndex=0;//运动图片帧
-    private int motionCostMs=500;//一次运动持续时间
+    private int motionCostMs=GameConfig.MoveOnceCostMs;//一次运动持续时间
     boolean isMotion=false;//是否在运动中
     Human(Location location,Map<Integer, PImage[]> allActionPImages){
         this.location=location;
@@ -111,6 +111,7 @@ class Human {
 }
 
 class Player extends Human{
+    int life = GameConfig.PlayerLife; //生命
     Player(Location location){
         super(location,Public.imgCenter.getPlayerMotionImgs());
     }

@@ -10,23 +10,33 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+interface GameConfig {
+    int AppPxWidth =720; //屏幕宽度
+    int FPS=20;
+    int PlayerLife=2; //玩家生命
+    int MoveOnceCostMs=300; //移动一次的耗时（单位毫秒）
+    int CountDown=20; //倒计时
+    String ProjectRootPath ="/Users/leishuai/Downloads/Demolition/";
+//    String ProjectRootPath= "/USYD/INFO1113/DemolitionProject/";
+}
+
 class Playgroud {
     int[][] AllGrads = null; //value 是 GradType,前面是y，后面是x
     final int x_count = Public.x_count;  //水平格子数
     final int y_count = Public.y_count;  //锤直格子数
-    Player player = null; //玩家
-    private int playLife = 5;
-    private int nowLevel = 0;
-    private int maxLevel = 0;
-    private int playStatus = 0;
-    volatile int countdown = 0; //倒计时，单位秒
+    Player player ; //玩家
+    private int nowLevel ;
+    private int maxLevel ;
+    private int gameStatus ;
+    volatile int countdown ; //倒计时，单位秒
     Map<Human, String> redEnemys = null;
     Map<Human, String> yEnemys = null;
     Location destinationLocation = null;
 
     Playgroud() {
-        playStatus = Public.PlayStatus_Playing;
-//        playStatus=Public.PlayStatus_PassAll;
+        player=new Player(null);
+        gameStatus = Public.GameStatus_Playing;
+//        gameStatus=Public.GameStatus_PassAll;
         nowLevel = 1;
         maxLevel = 2;
         reset();
@@ -39,28 +49,35 @@ class Playgroud {
         AllGrads = new int[y_count][x_count];
         redEnemys = new ConcurrentHashMap<>();
         yEnemys = new ConcurrentHashMap<>();
-        countdown = 181;
+        countdown = GameConfig.CountDown+1;
     }
 
-    void checkGameOver() {
-        if (countdown == 0) {
-            playStatus = Public.PlayStatus_Fail;
+    void playerDie() { //玩家死亡
+        player.life--;
+        if (player.life==0 ) { //游戏终结
+            gameStatus = Public.GameStatus_Fail;
+        }else{
+            restartGound();
         }
     }
 
-    void checkPassOneLevel() {
-        if (isArriveDest()) {
+    void checkPassOneLevel(){
+        boolean isArriveDest=player != null && player.location.equals(destinationLocation);
+        if (isArriveDest) { //玩家是否为终点
             if (nowLevel == maxLevel) { //通关
-                playStatus = Public.PlayStatus_PassAll;
+                gameStatus = Public.GameStatus_PassAll;
             } else { //下一关
                 startNextGound();
             }
         }
     }
 
-    //玩家是否为终点
-    boolean isArriveDest() {
-        return player != null && player.location.equals(destinationLocation);
+    //重玩同一关
+    void restartGound(){
+        //重置所有对象的值
+        reset();
+        //按关卡加载地图
+        loadAllGradsByConfigFile();
     }
 
     //开始下一关
@@ -86,8 +103,9 @@ class Playgroud {
     void startLoop() {
         //倒计时
         Public.scheduledExecutorService.scheduleAtFixedRate(() -> {
-            countdown--;
-            checkGameOver();
+            if(--countdown==0){
+                playerDie();
+            }
         }, 0, 1000, TimeUnit.MILLISECONDS);
         //敌军行动
         Public.scheduledExecutorService.scheduleAtFixedRate(() -> {
@@ -241,6 +259,10 @@ class Playgroud {
                     continue;
                 }
                 Location coverLocation = new Location(x, y);
+                if(player.location.equals(coverLocation)){ //玩家被炸了
+                    playerDie();
+                    return;
+                }
                 //简单的碰撞检测
                 for (Map.Entry<Human, String> kv : redEnemys.entrySet()) {
                     Human enemy = kv.getKey();
@@ -324,7 +346,7 @@ class Playgroud {
         int playerLifeImgLeftPx = Public.GridWidth * 4;
         canvas.image(Public.imgCenter.getPlayerLifeImg(), playerLifeImgLeftPx, imgTopPx, Public.GridWidth, Public.GridWidth);
         int playerLifeTextLeftPx = Public.GridWidth * 5 + Public.GridWidth / 3;
-        canvas.text("x " + Integer.toString(playLife), playerLifeTextLeftPx, textTopPx, Public.GridWidth * 4, Public.GridWidth * 3);
+        canvas.text("x " + player.life, playerLifeTextLeftPx, textTopPx, Public.GridWidth * 4, Public.GridWidth * 3);
         //时间
         int clockImgLeftPx = Public.GridWidth * 8;
         int clockTextLeftPx = Public.GridWidth * 9 + Public.GridWidth / 3;
@@ -342,7 +364,7 @@ class Playgroud {
         canvas.textSize(Public.GridWidth);
         int textTopPx = Public.GridWidth * y_count / 2;
         int LeftPx = Public.GridWidth * 5;
-        String contentText = playStatus == Public.PlayStatus_Fail ? "GAME OVER" : "YOU WIN";
+        String contentText = gameStatus == Public.GameStatus_Fail ? "GAME OVER" : "YOU WIN";
         canvas.text(contentText, LeftPx, textTopPx, Public.GridWidth * 7, Public.GridWidth * 3);
 
     }
@@ -351,7 +373,7 @@ class Playgroud {
         //重置背景
         resetBackground(canvas);
         //结束
-        if (playStatus == Public.PlayStatus_Fail || playStatus == Public.PlayStatus_PassAll) {
+        if (gameStatus == Public.GameStatus_Fail || gameStatus == Public.GameStatus_PassAll) {
             drawEnd(canvas);
             return;
         }
@@ -406,9 +428,7 @@ class Playgroud {
 
     //根据关卡从配置文件生成地图
     void loadAllGradsByConfigFile() {
-        String parentPath = "/Users/leishuai/Downloads/Demolition/";
-//        String parentPath = "/USYD/INFO1113/DemolitionProject/";
-        String level1MapFilePath = parentPath + String.format("level%d.txt", nowLevel);
+        String level1MapFilePath = GameConfig.ProjectRootPath + String.format("level%d.txt", nowLevel);
         File file = new File(level1MapFilePath);
         Scanner sc = null;
         try {
@@ -438,7 +458,7 @@ class Playgroud {
                 int gradType = charToGradType.get(c);
                 switch (gradType) {
                     case Public.GridType_Player: {
-                        player = new Player(new Location(x, y));
+                        player.location=new Location(x, y);
                         break;
                     }
                     case Public.GridType_RedEnemy: {

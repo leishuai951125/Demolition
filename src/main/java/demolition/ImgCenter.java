@@ -8,8 +8,7 @@ import java.util.Map;
 
 class ImgCenter {
     private HashMap<Integer, PImage> gridTypeToImg = null;
-    private final static String parentPath = GameConfig.ProjectRootPath+"src/main/resources/";
-//    private final static String parentPath = "/USYD/INFO1113/DemolitionProject/src/main/resources/";
+    private final static String parentPath = GameConfig.ProjectResourcesPath;
     private Map<Integer,PImage[]> playerAllActionPImages=new HashMap<>(4);
     private Map<Integer,PImage[]> redEnemyAllActionPImages=new HashMap<>(4);
     private Map<Integer,PImage[]> yellowEnemyAllActionPImages=new HashMap<>(4);

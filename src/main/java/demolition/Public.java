@@ -1,5 +1,6 @@
 package demolition;
 
+import java.io.File;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -50,8 +51,13 @@ class Public {
     //随机数生成器
     public static Random random = new Random();
     //定时任务执行器
-//    static ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
     static scheduledExecutorService scheduledExecutorService = scheduledExecutorServiceImpl.getInstance();
+    public static String getProjectResourcesPath(){
+        String classesPath=ClassLoader.getSystemClassLoader().getResource("").getPath();
+        String projectResourcesPath=new File(classesPath).getParent()+"/resources/";
+        System.out.println("ProjectResourcesPath : "+projectResourcesPath);
+        return projectResourcesPath;
+    }
 }
 
 interface scheduledExecutorService{

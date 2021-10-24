@@ -15,9 +15,9 @@ interface GameConfig {
     int FPS=20;
     int PlayerLife=2; //玩家生命
     int MoveOnceCostMs=300; //移动一次的耗时（单位毫秒）
-    int CountDown=20; //倒计时
-    String ProjectRootPath ="/Users/leishuai/Downloads/Demolition/";
-//    String ProjectRootPath= "/USYD/INFO1113/DemolitionProject/";
+    int CountDown=200; //倒计时
+    String ProjectResourcesPath =Public.getProjectResourcesPath();
+//    String ProjectResourcesPath= "/USYD/INFO1113/DemolitionProject/";
 }
 
 class Playgroud {
@@ -428,7 +428,7 @@ class Playgroud {
 
     //根据关卡从配置文件生成地图
     void loadAllGradsByConfigFile() {
-        String level1MapFilePath = GameConfig.ProjectRootPath + String.format("level%d.txt", nowLevel);
+        String level1MapFilePath = GameConfig.ProjectResourcesPath + String.format("level%d.txt", nowLevel);
         File file = new File(level1MapFilePath);
         Scanner sc = null;
         try {
